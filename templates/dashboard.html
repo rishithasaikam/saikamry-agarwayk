@@ -55,7 +55,9 @@
 
 <body>
 
+
 <div class="top-buttons">
+    <a href="{{ url_for('cross_sell') }}" class="btn">Go to Cross-Sell Analysis</a>
     <a href="{{ url_for('upload') }}" class="btn">Upload Data</a>
     <a href="{{ url_for('search') }}" class="btn">Search Transactions</a>
     <a href="{{ url_for('logout') }}" class="btn logout-btn">Logout</a>
@@ -84,6 +86,14 @@
     <div class="chart-card">
         {{ brand_pref_fig|safe }}
     </div>
+
+    <div class="chart-card">
+    {{ top_cat_fig|safe }}
+    </div>
+    <div class="chart-card">
+    {{ cross_sell_fig|safe }}
+</div>
+
 
 </div>
 

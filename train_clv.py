@@ -1,43 +1,40 @@
 # train_clv_model.py
 
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
 import pickle
+from sklearn.ensemble import RandomForestRegressor
 from database.db_connection import db, Transaction
-from config import DATABASE_URI
-
-from flask import Flask
-from database.db_connection import db
-
-# Flask App Setup (to use database)
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+from app import app  # Import your Flask app
 
 with app.app_context():
-    # Fetch data
-    transactions = db.session.query(Transaction.hshd_num, Transaction.spend, Transaction.basket_num).limit(50000).all()
+    # Step 1: Fetch data (recent year transactions)
+    latest_year = db.session.query(db.func.max(Transaction.year)).scalar()
 
-    df = pd.DataFrame(transactions, columns=['hshd_num', 'spend', 'basket_num'])
+    data = db.session.query(Transaction.hshd_num, Transaction.spend)\
+            .filter(Transaction.year == latest_year).all()
 
-    # Aggregate features
+    df = pd.DataFrame(data, columns=['hshd_num', 'spend'])
+
+    # Step 2: Aggregate customer metrics
     agg = df.groupby('hshd_num').agg(
         total_spend=('spend', 'sum'),
-        num_purchases=('basket_num', 'count'),
+        num_purchases=('spend', 'count'),
         avg_spend=('spend', 'mean')
     ).reset_index()
 
-    # Features (X) and Target (y)
-    X_train = agg[['total_spend', 'num_purchases', 'avg_spend']]
-    y_train = agg['total_spend'] * 1.2  # (Fake target now, can replace later if needed)
+    # Step 3: Create feature matrix (X) and target (y)
+    X = agg[['total_spend', 'num_purchases', 'avg_spend']]
 
-    # Train Model
-    model = RandomForestRegressor()
-    model.fit(X_train, y_train)
+    # Dummy CLV target: total_spend * 1.2
+    agg['clv'] = agg['total_spend'] * 1.2
+    y = agg['clv']
 
-    # Save model
+    # Step 4: Train the model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
+
+    # Step 5: Save the model
     with open('models/clv_model.pkl', 'wb') as f:
         pickle.dump(model, f)
 
-    print("✅ Model trained and saved successfully!")
+    print("✅ CLV model trained and saved successfully!")

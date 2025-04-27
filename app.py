@@ -6,7 +6,13 @@ from utils.model_helpers import predict_clv, predict_churn, analyze_basket
 from utils.dashboard_charts import plot_spend_over_time, plot_brand_preference
 from database.db_connection import db, User, Transaction, Product, Household
 from config import DATABASE_URI, SECRET_KEY
+from utils.basket_analysis_ml import run_cross_sell_analysis
 import os
+from utils.dashboard_charts import (
+    plot_spend_over_time,
+    plot_brand_preference,
+    plot_top_categories_over_time
+)
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -76,20 +82,29 @@ from utils.dashboard_charts import plot_spend_over_time, plot_brand_preference
 @app.route('/dashboard')
 def dashboard():
     clv_fig = predict_clv()
-    basket_fig = analyze_basket()
     churn_fig = predict_churn()
+    basket_fig = analyze_basket()
     spend_time_fig = plot_spend_over_time()
     brand_pref_fig = plot_brand_preference()
+    top_cat_fig = plot_top_categories_over_time()
 
     return render_template('dashboard.html',
                            clv_fig=clv_fig,
-                           basket_fig=basket_fig,
                            churn_fig=churn_fig,
+                           basket_fig=basket_fig,
                            spend_time_fig=spend_time_fig,
-                           brand_pref_fig=brand_pref_fig)
+                           brand_pref_fig=brand_pref_fig,
+                           top_cat_fig=top_cat_fig)
 
+@app.route('/cross_sell', methods=['GET', 'POST'])
+def cross_sell():
+    cross_sell_fig = None
 
+    if request.method == 'POST':
+        target_product_num = int(request.form['target_product_num'])
+        cross_sell_fig = run_cross_sell_analysis(target_product_num)
 
+    return render_template('cross_sell.html', cross_sell_fig=cross_sell_fig)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():

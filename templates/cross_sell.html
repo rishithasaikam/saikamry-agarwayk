@@ -1,0 +1,30 @@
+<!-- templates/cross_sell.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cross-Sell Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+<body>
+
+<h2>Cross-Sell Prediction</h2>
+
+<form method="POST">
+    <label for="target_product_num">Enter Product Number:</label>
+    <input type="number" name="target_product_num" required>
+    <button type="submit">Analyze Cross-Sell</button>
+</form>
+
+{% if cross_sell_fig %}
+    <div style="margin-top: 30px;">
+        {{ cross_sell_fig|safe }}
+    </div>
+{% endif %}
+
+
+
+</body>
+</html>
